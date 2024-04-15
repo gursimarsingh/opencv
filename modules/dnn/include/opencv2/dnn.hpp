@@ -67,7 +67,7 @@ Check @ref tutorial_dnn_googlenet "the corresponding tutorial" for more details
 /** @example samples/dnn/object_detection.cpp
 Check @ref tutorial_dnn_yolo "the corresponding tutorial" for more details
 */
-/** @example samples/dnn/openpose.cpp
+/** @example samples/dnn/human_pose.cpp
 */
 /** @example samples/dnn/segmentation.cpp
 */
