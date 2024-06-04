@@ -39,7 +39,7 @@ const string param_keys =
     "{help    h  |           | show help message}"
     "{model   m  |           | network model}"
     "{query   q  |           | Path to target image. Skip this argument to select target in the video frame.}"
-    "{batch_size |    32     | batch size of each inference}"
+    "{batch_size |    1     | batch size of each inference}"
     "{video   v  | vtest.avi | video file path}"
     "{yolo       |           | Path to yolov8n.onnx}"
     "{resize_h   |    256    | resize input to specific height}"
@@ -160,13 +160,15 @@ static void extractFeatures(vector<Mat> &imglist, Net *net, const int &resize_h,
         }
         Mat blob = blobFromImages(batch, 1.0, Size(resize_w, resize_h), Scalar(0.0,0.0,0.0), true, false, CV_32F);
         net->setInput(blob);
-        Mat out = net->forward();
-        for (int i = 0; i < (int)out.size().height; i++)
+        Mat out=net->forward();
+        vector<int> s {out.size[0], out.size[1]};
+        out = out.reshape(1, s);
+        for (int i = 0; i < out.rows; i++)
         {
             vector<float> temp_feature;
-            for (int j = 0; j < (int)out.size().width; j++)
+            for (int j = 0; j < out.cols; j++)
             {
-                temp_feature.push_back(out.at<float>(i,j));
+                temp_feature.push_back(out.at<float>(i, j));
             }
             features.push_back(normalization(temp_feature));
         }
@@ -190,7 +192,7 @@ static int getTopK(const vector<vector<float>> &queryFeatures, const vector<vect
         return -1; // No valid index if either feature list is empty
 
     int bestIndex = -1;
-    float maxSimilarity = -1.0;
+    float maxSimilarity = -1000000000.0;
 
     const vector<float> &query = queryFeatures[0];
 
@@ -203,7 +205,6 @@ static int getTopK(const vector<vector<float>> &queryFeatures, const vector<vect
             bestIndex = j;
         }
     }
-
     return bestIndex;
 }
 
@@ -243,7 +244,7 @@ static vector<Mat> yoloDetector(Mat &frame, Net &net)
         Point minClassLoc, maxClassLoc;
         minMaxLoc(outputTransposed.row(i).colRange(4, outputTransposed.cols), &minScore, &maxScore, &minClassLoc, &maxClassLoc);
 
-        if (maxScore >= 0.25) {
+        if (maxScore >= 0.25 && maxClassLoc.x == 0) {
             double centerX = outputTransposed.at<float>(i, 0);
             double centerY = outputTransposed.at<float>(i, 1);
             double w = outputTransposed.at<float>(i, 2);
@@ -284,7 +285,6 @@ static vector<Mat> yoloDetector(Mat &frame, Net &net)
         images.push_back(crop_img);
         imgDict[crop_img] = roi;
     }
-
     return images;
 }
 
@@ -315,14 +315,14 @@ static void drawRectangle(int event, int x, int y, int, void* param) {
     }
 }
 
-void extractFrames(const string& queryImgPath, const string& videoPath, Net* reidNet, const string& yoloPath, int resize_h = 384, int resize_w = 128, int batch_size = 32) {
+void extractFrames(const string& queryImgPath, const string& videoPath, Net* reidNet, const string& yoloPath, int resize_h = 384, int resize_w = 128, int batch_size = 1) {
     VideoCapture cap(videoPath);
     if (!cap.isOpened()) {
         cerr << "Error: Video could not be opened." << endl;
         return;
     }
 
-    Net net = readNetFromONNX(yoloPath);
+    Net net = readNet(yoloPath);
     vector<Mat> queryImages;
 
     Mat queryImg;
@@ -358,19 +358,23 @@ void extractFrames(const string& queryImgPath, const string& videoPath, Net* rei
     }
 
     Mat frame;
+    vector<vector<float>> queryFeatures;
+    extractFeatures(queryImages, reidNet, resize_h, resize_w, queryFeatures, batch_size);
+
+
     for(;;) {
         if (!cap.read(frame) || frame.empty()) {
             break;
         }
         vector<Mat> detectedImages = yoloDetector(frame, net);
-        vector<vector<float>> queryFeatures;
-        extractFeatures(queryImages, reidNet, resize_h, resize_w, queryFeatures, batch_size);
+
         vector<vector<float>> galleryFeatures;
         extractFeatures(detectedImages, reidNet, resize_h, resize_w, galleryFeatures, batch_size);
 
         int topk_idx = getTopK(queryFeatures, galleryFeatures);
         if (topk_idx != -1 && static_cast<int>(detectedImages.size()) > topk_idx) {
             Mat topImg = detectedImages[topk_idx];
+
             Rect bbox = imgDict[topImg];
             rectangle(frame, bbox, Scalar(0, 0, 255), 2);
             putText(frame, "Target", Point(bbox.x, bbox.y - 10), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 255), 2);

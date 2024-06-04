@@ -25,7 +25,6 @@ import argparse
 import os.path
 import numpy as np
 import cv2 as cv
-print(cv.__version__)
 
 backends = (cv.dnn.DNN_BACKEND_DEFAULT,
     cv.dnn.DNN_BACKEND_INFERENCE_ENGINE,
