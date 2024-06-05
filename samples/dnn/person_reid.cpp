@@ -168,7 +168,7 @@ static void extractFeatures(vector<Mat> &imglist, Net *net, const int &resize_h,
             vector<float> temp_feature;
             for (int j = 0; j < out.cols; j++)
             {
-                temp_feature.push_back(out.at<float>(i,j));
+                temp_feature.push_back(out.at<float>(i, j));
             }
             features.push_back(normalization(temp_feature));
         }
@@ -373,6 +373,7 @@ void extractFrames(const string& queryImgPath, const string& videoPath, Net* rei
         int topk_idx = getTopK(queryFeatures, galleryFeatures);
         if (topk_idx != -1 && static_cast<int>(detectedImages.size()) > topk_idx) {
             Mat topImg = detectedImages[topk_idx];
+
             Rect bbox = imgDict[topImg];
             rectangle(frame, bbox, Scalar(0, 0, 255), 2);
             putText(frame, "Target", Point(bbox.x, bbox.y - 10), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 255), 2);
