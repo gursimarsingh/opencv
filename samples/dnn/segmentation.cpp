@@ -12,7 +12,7 @@ std::string param_keys =
     "{ help  h     | | Print help message. }"
     "{ @alias      | | An alias name of model to extract preprocessing parameters from models.yml file. }"
     "{ zoo         | models.yml | An optional path to file with preprocessing parameters }"
-    "{ device      |  0 | camera device number. }"
+    "{ device      |  0         | camera device number. }"
     "{ input i     | | Path to input image or video file. Skip this argument to capture frames from a camera. }"
     "{ classes     | | Optional path to a text file with names of classes. }"
     "{ colors      | | Optional path to a text file with colors for an every class. "
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
     // Open file with classes names.
     if (parser.has("classes"))
     {
-        std::string file = parser.get<String>("classes");
+        std::string file = findFile(parser.get<String>("classes"));
         std::ifstream ifs(file.c_str());
         if (!ifs.is_open())
             CV_Error(Error::StsError, "File " + file + " not found");
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
     // Open file with colors.
     if (parser.has("colors"))
     {
-        std::string file = parser.get<String>("colors");
+        std::string file = findFile(parser.get<String>("colors"));
         std::ifstream ifs(file.c_str());
         if (!ifs.is_open())
             CV_Error(Error::StsError, "File " + file + " not found");
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
     //! [Open a video file or an image file or a camera stream]
     VideoCapture cap;
     if (parser.has("input"))
-        cap.open(parser.get<String>("input"));
+        cap.open(findFile(parser.get<String>("input")));
     else
         cap.open(parser.get<int>("device"));
     //! [Open a video file or an image file or a camera stream]
@@ -150,44 +150,21 @@ int main(int argc, char **argv)
         //! [Set input blob]
         net.setInput(blob);
         //! [Set input blob]
-        //! [Make forward pass]
-        Mat score = net.forward();
-        //! [Make forward pass]
 
         cv::Mat mask, saliency_map, foreground_overlay, background_overlay, foreground_segmented;
         if (modelName == "u2netp")
         {
+            vector<Mat> output;
+            net.forward(output, net.getUnconnectedOutLayersNames());
 
-            saliency_map = cv::Mat(score.size[2], score.size[3], CV_32F, score.ptr<float>(0, 0));
-            cv::threshold(saliency_map, mask, 0.5, 255, cv::THRESH_BINARY);
-            cv::resize(mask, mask, cv::Size(frame.cols, frame.rows), 0, 0, cv::INTER_NEAREST);
-            mask.convertTo(mask, CV_8U);
-
-            // Create overlays for foreground and background
-            foreground_overlay = cv::Mat::zeros(frame.size(), frame.type());
-            background_overlay = cv::Mat::zeros(frame.size(), frame.type());
-
-            // Set foreground (object) to red and background to blue
-            for (int i = 0; i < mask.rows; i++)
-            {
-                for (int j = 0; j < mask.cols; j++)
-                {
-                    if (mask.at<uchar>(i, j) == 255)
-                    {
-                        foreground_overlay.at<cv::Vec3b>(i, j) = cv::Vec3b(0, 0, 255); // Red foreground
-                    }
-                    else
-                    {
-                        background_overlay.at<cv::Vec3b>(i, j) = cv::Vec3b(255, 0, 0); // Blue background
-                    }
-                }
-            }
-            // Blend the overlays with the original frame
-            cv::addWeighted(frame, 1, foreground_overlay, 0.5, 0, foreground_segmented);
-            cv::addWeighted(foreground_segmented, 1, background_overlay, 0.5, 0, frame);
+            Mat pred = output[0].reshape(1, output[0].size[2]);
+            pred.convertTo(frame, CV_8U, 255.0);
         }
         else
         {
+            //! [Make forward pass]
+            Mat score = net.forward();
+            //! [Make forward pass]
             Mat segm;
             colorizeSegmentation(score, segm);
 
