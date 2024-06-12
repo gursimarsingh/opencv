@@ -8,21 +8,16 @@
 
 #include "common.hpp"
 
-using namespace cv;
-using namespace std;
-using namespace dnn;
-
-const string param_keys =
-    "{ help  h    |            | Print help message. }"
-    "{ @alias     |            | An alias name of model to extract preprocessing parameters from models.yml file. }"
-    "{ zoo        | models.yml | An optional path to file with preprocessing parameters }"
-    "{ device     |      0     | camera device number. }"
-    "{ input i    |            | Path to input image or video file. Skip this argument to capture frames from a camera. }"
-    "{ classes    |            | Optional path to a text file with names of classes. }"
-    "{ colors     |            | Optional path to a text file with colors for an every class. "
-    "Every color is represented with three values from 0 to 255 in BGR channels order. }";
-
-const string backend_keys = format(
+std::string param_keys =
+    "{ help  h     | | Print help message. }"
+    "{ @alias      | | An alias name of model to extract preprocessing parameters from models.yml file. }"
+    "{ zoo         | models.yml | An optional path to file with preprocessing parameters }"
+    "{ device      |  0         | camera device number. }"
+    "{ input i     | | Path to input image or video file. Skip this argument to capture frames from a camera. }"
+    "{ classes     | | Optional path to a text file with names of classes. }"
+    "{ colors      | | Optional path to a text file with colors for an every class. "
+    "An every color is represented with three values from 0 to 255 in BGR channels order. }";
+std::string backend_keys = cv::format(
     "{ backend   | 0 | Choose one of computation backends: "
     "%d: automatically (by default), "
     "%d: Intel's Deep Learning Inference Engine (https://software.intel.com/openvino-toolkit), "
