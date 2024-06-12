@@ -91,10 +91,8 @@ while cv.waitKey(1) < 0:
         break
 
     cv.imshow("Original Image", frame)
-
     frameHeight = frame.shape[0]
     frameWidth = frame.shape[1]
-
     # Create a 4D blob from a frame.
     inpWidth = args.width if args.width else frameWidth
     inpHeight = args.height if args.height else frameHeight
@@ -112,14 +110,12 @@ while cv.waitKey(1) < 0:
         numClasses = score.shape[1]
         height = score.shape[2]
         width = score.shape[3]
-
         # Draw segmentation
         if not colors:
             # Generate colors
             colors = [np.array([0, 0, 0], np.uint8)]
             for i in range(1, numClasses):
                 colors.append((colors[i - 1] + np.random.randint(0, 256, [3], np.uint8)) / 2)
-
         classIds = np.argmax(score[0], axis=0)
         segm = np.stack([colors[idx] for idx in classIds.flatten()])
         segm = segm.reshape(height, width, 3)

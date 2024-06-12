@@ -24,8 +24,9 @@ std::string backend_keys = cv::format(
     "%d: OpenCV implementation, "
     "%d: VKCOM, "
     "%d: CUDA }",
-    cv::dnn::DNN_BACKEND_DEFAULT, cv::dnn::DNN_BACKEND_INFERENCE_ENGINE, cv::dnn::DNN_BACKEND_OPENCV, cv::dnn::DNN_BACKEND_VKCOM, cv::dnn::DNN_BACKEND_CUDA);
-std::string target_keys = cv::format(
+    DNN_BACKEND_DEFAULT, DNN_BACKEND_INFERENCE_ENGINE, DNN_BACKEND_OPENCV, DNN_BACKEND_VKCOM, DNN_BACKEND_CUDA);
+
+const string target_keys = format(
     "{ target    | 0 | Choose one of target computation devices: "
     "%d: CPU target (by default), "
     "%d: OpenCL, "
@@ -34,15 +35,11 @@ std::string target_keys = cv::format(
     "%d: Vulkan, "
     "%d: CUDA, "
     "%d: CUDA fp16 (half-float preprocess) }",
-    cv::dnn::DNN_TARGET_CPU, cv::dnn::DNN_TARGET_OPENCL, cv::dnn::DNN_TARGET_OPENCL_FP16, cv::dnn::DNN_TARGET_MYRIAD, cv::dnn::DNN_TARGET_VULKAN, cv::dnn::DNN_TARGET_CUDA, cv::dnn::DNN_TARGET_CUDA_FP16);
-std::string keys = param_keys + backend_keys + target_keys;
+    DNN_TARGET_CPU, DNN_TARGET_OPENCL, DNN_TARGET_OPENCL_FP16, DNN_TARGET_MYRIAD, DNN_TARGET_VULKAN, DNN_TARGET_CUDA, DNN_TARGET_CUDA_FP16);
 
-using namespace cv;
-using namespace std;
-using namespace dnn;
-
-std::vector<std::string> classes;
-std::vector<Vec3b> colors;
+string keys = param_keys + backend_keys + target_keys;
+vector<string> classes;
+vector<Vec3b> colors;
 
 void showLegend();
 
@@ -52,8 +49,8 @@ int main(int argc, char **argv)
 {
     CommandLineParser parser(argc, argv, keys);
 
-    const std::string modelName = parser.get<String>("@alias");
-    const std::string zooFile = parser.get<String>("zoo");
+    const string modelName = parser.get<String>("@alias");
+    const string zooFile = parser.get<String>("zoo");
 
     keys += genPreprocArguments(modelName, zooFile);
 
@@ -81,13 +78,12 @@ int main(int argc, char **argv)
         std::ifstream ifs(file.c_str());
         if (!ifs.is_open())
             CV_Error(Error::StsError, "File " + file + " not found");
-        std::string line;
-        while (std::getline(ifs, line))
+        string line;
+        while (getline(ifs, line))
         {
             classes.push_back(line);
         }
     }
-
     // Open file with colors.
     if (parser.has("colors"))
     {
@@ -95,10 +91,10 @@ int main(int argc, char **argv)
         std::ifstream ifs(file.c_str());
         if (!ifs.is_open())
             CV_Error(Error::StsError, "File " + file + " not found");
-        std::string line;
-        while (std::getline(ifs, line))
+        string line;
+        while (getline(ifs, line))
         {
-            std::istringstream colorStr(line.c_str());
+            istringstream colorStr(line.c_str());
 
             Vec3b color;
             for (int i = 0; i < 3 && !colorStr.eof(); ++i)
@@ -119,9 +115,8 @@ int main(int argc, char **argv)
     net.setPreferableBackend(backendId);
     net.setPreferableTarget(targetId);
     //! [Read and initialize network]
-
     // Create a window
-    static const std::string kWinName = "Deep learning semantic segmentation in OpenCV";
+    static const string kWinName = "Deep learning semantic segmentation in OpenCV";
     namedWindow(kWinName, WINDOW_NORMAL);
 
     //! [Open a video file or an image file or a camera stream]
@@ -131,7 +126,6 @@ int main(int argc, char **argv)
     else
         cap.open(parser.get<int>("device"));
     //! [Open a video file or an image file or a camera stream]
-
     // Process frames.
     Mat frame, blob;
     while (waitKey(1) < 0)
@@ -142,11 +136,9 @@ int main(int argc, char **argv)
             waitKey();
             break;
         }
-        cv::imshow("Original Image", frame);
-
+        imshow("Original Image", frame);
         //! [Create a 4D blob from a frame]
         blobFromImage(frame, blob, scale, Size(inpWidth, inpHeight), mean, swapRB, false);
-        //! [Create a 4D blob from a frame]
         //! [Set input blob]
         net.setInput(blob);
         //! [Set input blob]
@@ -167,16 +159,15 @@ int main(int argc, char **argv)
             //! [Make forward pass]
             Mat segm;
             colorizeSegmentation(score, segm);
-
             resize(segm, segm, frame.size(), 0, 0, INTER_NEAREST);
             addWeighted(frame, 0.1, segm, 0.9, 0.0, frame);
         }
 
         // Put efficiency information.
-        std::vector<double> layersTimes;
+        vector<double> layersTimes;
         double freq = getTickFrequency() / 1000;
         double t = net.getPerfProfile(layersTimes) / freq;
-        std::string label = format("Inference time: %.2f ms", t);
+        string label = format("Inference time: %.2f ms", t);
         putText(frame, label, Point(0, 15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0));
 
         imshow(kWinName, frame);
@@ -230,7 +221,6 @@ void colorizeSegmentation(const Mat &score, Mat &segm)
             }
         }
     }
-
     segm.create(rows, cols, CV_8UC3);
     for (int row = 0; row < rows; row++)
     {
