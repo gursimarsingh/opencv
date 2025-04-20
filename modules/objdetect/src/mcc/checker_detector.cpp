@@ -44,10 +44,13 @@ Ptr<CCheckerDetector> CCheckerDetector::create()
 {
     return makePtr<CCheckerDetectorImpl>();
 }
+
+#ifdef HAVE_OPENCV_DNN
 Ptr<CCheckerDetector> CCheckerDetector::create(const dnn::Net& net)
 {
     return makePtr<CCheckerDetectorImpl>(net);
 }
+#endif
 
 CCheckerDetectorImpl::
     CCheckerDetectorImpl()
@@ -245,6 +248,7 @@ bool CCheckerDetectorImpl::
 {
     m_checkers.clear();
 
+#ifdef HAVE_OPENCV_DNN
     if (this->net.empty() || !m_useDnn)
     {
         return _no_net_process(image, nc, regionsOfInterest);
@@ -459,6 +463,9 @@ bool CCheckerDetectorImpl::
     m_checkers.resize(min(nc, (int)m_checkers.size()));
 
     return !m_checkers.empty();
+#else
+    return _no_net_process(image, nc, regionsOfInterest);
+#endif
 }
 
 
@@ -479,7 +486,7 @@ void CCheckerDetectorImpl::setColorChartType(ColorChart chartType)
 {
     this->m_chartType = chartType;
 }
-
+#ifdef HAVE_OPENCV_DNN
 void CCheckerDetectorImpl::setUseDnnModel(bool useDnn)
 {
     this->m_useDnn = useDnn;
@@ -489,7 +496,7 @@ bool CCheckerDetectorImpl::getUseDnnModel() const
 {
     return m_useDnn;
 }
-
+#endif
 const DetectorParametersMCC& CCheckerDetectorImpl::getDetectionParams() const
 {
     return m_params;
@@ -1417,8 +1424,6 @@ void CCheckerDetectorImpl::
 {
     // color chart classic model
     CChartModel cccm(m_chartType);
-    Mat lab;
-    size_t N;
     std::vector<Point2f> fbox = cccm.box;
     std::vector<Point2f> cellchart = cccm.cellchart;
 
@@ -1428,7 +1433,7 @@ void CCheckerDetectorImpl::
     Mat mask(im_rgb.size(), CV_8U);
     mask.setTo(Scalar::all(0));
     std::vector<Point2f> bch(4), bcht(4);
-    N = cellchart.size() / 4;
+    int N = cellchart.size() / 4;
 
     // Create table charts information
     //          |p_size|average|stddev|max|min|
