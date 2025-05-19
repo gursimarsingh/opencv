@@ -3069,7 +3069,7 @@ TEST(ImgProc_BayerEdgeAwareDemosaicing, accuracy)
             CV_Assert(!bayer.empty() && (bayer.type() == CV_8UC1 || bayer.type() == CV_16UC1));
 
             Mat actual;
-            cv::demosaicing(bayer, actual, COLOR_BayerBG2BGR_EA + i);
+            cv::demosaicing(bayer, actual, COLOR_BayerBG2BGR_EA + i, 0, cv::BORDER_REFLECT_101);
 
             if (t == 0)
                 checkData<unsigned char>(actual, reference, ts, types[i], next, "CV_8U");

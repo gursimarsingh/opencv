@@ -3806,7 +3806,9 @@ The function can do the following transformations:
 
 @sa cvtColor
 */
-CV_EXPORTS_W void demosaicing(InputArray src, OutputArray dst, int code, int dstCn = 0);
+CV_EXPORTS_W void demosaicing(InputArray src, OutputArray dst, int code,
+                              int dstCn = 0,
+                              int borderType = BORDER_REFLECT_101);
 
 //! @} imgproc_color_conversions
 

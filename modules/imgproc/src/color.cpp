@@ -316,7 +316,7 @@ void cvtColor( InputArray _src, OutputArray _dst, int code, int dcn, AlgorithmHi
                     _src.copyTo(src);
                 else
                     src = _src.getMat();
-                demosaicing(src, _dst, code, dcn);
+                demosaicing(src, _dst, code, dcn, BORDER_REFLECT_101);
                 break;
             }
 

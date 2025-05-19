@@ -1073,13 +1073,16 @@ static void Bayer2RGB_( const Mat& srcmat, Mat& dstmat, int code )
 
 /////////////////// Demosaicing using Variable Number of Gradients ///////////////////////
 
-static void Bayer2RGB_VNG_8u( const Mat& srcmat, Mat& dstmat, int code )
+static void Bayer2RGB_VNG_8u( const Mat& srcmat, Mat& dstmat, int code, int borderType )
 {
-    const uchar* bayer = srcmat.ptr();
-    int bstep = (int)srcmat.step;
+    Mat src;
+    cv::copyMakeBorder(srcmat, src, 2, 2, 2, 2, borderType);
+
+    const uchar* bayer = src.ptr();
+    int bstep = (int)src.step;
     uchar* dst = dstmat.ptr();
     int dststep = (int)dstmat.step;
-    Size size = srcmat.size();
+    Size size = src.size();
 
     int blueIdx = code == COLOR_BayerBG2BGR_VNG || code == COLOR_BayerGB2BGR_VNG ? 0 : 2;
     bool greenCell0 = code != COLOR_BayerBG2BGR_VNG && code != COLOR_BayerRG2BGR_VNG;
@@ -1754,7 +1757,8 @@ static void Bayer2RGB_EdgeAware_T(const Mat& src, Mat& dst, int code)
 //                           The main Demosaicing function                              //
 //////////////////////////////////////////////////////////////////////////////////////////
 
-void cv::demosaicing(InputArray _src, OutputArray _dst, int code, int dcn)
+void cv::demosaicing(InputArray _src, OutputArray _dst, int code, int dcn,
+                     int borderType)
 {
     CV_INSTRUMENT_REGION();
 
@@ -1812,7 +1816,7 @@ void cv::demosaicing(InputArray _src, OutputArray _dst, int code, int dcn)
             else
             {
                 CV_Assert( depth == CV_8U );
-                Bayer2RGB_VNG_8u(src, dst_, code);
+                Bayer2RGB_VNG_8u(src, dst_, code, borderType);
             }
         }
         break;
